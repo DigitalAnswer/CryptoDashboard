@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -15,17 +17,10 @@ func (pc PricingController) getSellPriceKraken(cryptoCurrency string, fiatCurren
 	// URL Request
 	url := fmt.Sprintf("https://api.kraken.com/0/public/Ticker?pair=ETH%s", fiatCurrency)
 
-	// Build request
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Fatal("NewRequest: ", err)
-		return nil, err
-	}
-
 	// Send the request via a client
 	// Do sends an HTTP request and
 	// returns an HTTP response
-	resp, err := pc.client.Do(req)
+	resp, err := pc.client.Get(url)
 	if err != nil {
 		log.Fatal("Do: ", err)
 		return nil, err
@@ -36,8 +31,18 @@ func (pc PricingController) getSellPriceKraken(cryptoCurrency string, fiatCurren
 	// Defer the closing of the body
 	defer resp.Body.Close()
 
-	result := "300"
-	return &result, nil
+	var data map[string]interface{}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err := json.Unmarshal(body, &data); err == nil {
+		result, _ := data["result"].(map[string]interface{})
+		crypto := result["XETHZUSD"].(map[string]interface{})
+		lastTrade := crypto["c"].([]interface{})
+		lastPrice := lastTrade[0].(string)
+		// fmt.Printf("%T\n", lastTrade)
+		fmt.Println(lastPrice)
+		return &lastPrice, nil
+	}
+	return nil, nil
 	// var record GetMarkets
 
 	// if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
