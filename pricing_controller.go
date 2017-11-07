@@ -7,6 +7,14 @@ import (
 	"net/http"
 )
 
+// APIPath enum string
+type APIPath string
+
+// APIPath enum string
+const (
+	APIPathTicker APIPath = "ticker"
+)
+
 // PricingController struct
 type PricingController struct {
 	client *http.Client
@@ -31,11 +39,55 @@ type CurrencyTickerResponse struct {
 	LastUpdated      string `json:"last_updated"`
 }
 
+func (r *CurrencyTickerResponse) UnmarshalJSON(raw []byte) error {
+	var data map[string]interface{}
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+
+	if v, ok := data["id"]; ok {
+		r.ID = getStringValue(v)
+	}
+	if v, ok := data["name"]; ok {
+		r.Name = getStringValue(v)
+	}
+	if v, ok := data["symbol"]; ok {
+		r.Symbol = getStringValue(v)
+	}
+	if v, ok := data["price_usd"]; ok {
+		r.PriceUSD = getStringValue(v)
+	}
+	if v, ok := data["price_btc"]; ok {
+		r.PriceBTC = getStringValue(v)
+	}
+	if v, ok := data["percent_change_24h"]; ok {
+		r.PercentChange24h = getStringValue(v)
+	}
+	if v, ok := data["last_updated"]; ok {
+		r.LastUpdated = getStringValue(v)
+	}
+
+	return nil
+}
+
+func getStringValue(value interface{}) string {
+	switch value.(type) {
+	case string:
+		return value.(string)
+	}
+
+	return ""
+}
+
 // cryptoCurrency must the full name of the crypto like bitcoin and not btc
-func (pc PricingController) getSellPriceKraken(cryptoCurrency string, fiatCurrency string) (*CurrencyTickerResponse, error) {
+func (pc PricingController) getSellPriceKraken(cryptoCurrency CurrencyType, fiatCurrency string) (*CurrencyTickerResponse, error) {
 	// URL Request
-	// url := fmt.Sprintf("https://api.kraken.com/0/public/Ticker?pair=ETH%s", fiatCurrency)
-	url := fmt.Sprintf("https://api.coinmarketcap.com/v1/ticker/%s/", cryptoCurrency)
+	url := fmt.Sprintf("https://api.coinmarketcap.com/v1/%s/%s/", APIPathTicker, cryptoCurrency)
+	if len(fiatCurrency) > 0 {
+		url += fmt.Sprintf("?convert=%s", fiatCurrency)
+	}
+
+	log.Printf("url: %s", url)
 
 	// Send the request via a client
 	// Do sends an HTTP request and
