@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -13,9 +12,30 @@ type PricingController struct {
 	client *http.Client
 }
 
-func (pc PricingController) getSellPriceKraken(cryptoCurrency string, fiatCurrency string) (*string, error) {
+// CurrencyTickerResponse struct
+type CurrencyTickerResponse struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	Rank     string `json:"rank"`
+	PriceUSD string `json:"price_usd"`
+	PriceBTC string `json:"price_btc"`
+	// "24h_volume_usd": "72855700.0",
+	// "market_cap_usd": "9080883500.0",
+	// "available_supply": "15844176.0",
+	// "total_supply": "15844176.0",
+	// "max_supply": "21000000.0",
+	PercentChange1h  string `json:"percent_change_1h"`
+	PercentChange24h string `json:"percent_change_24h"`
+	PercentChange7d  string `json:"percent_change_7d"`
+	LastUpdated      string `json:"last_updated"`
+}
+
+// cryptoCurrency must the full name of the crypto like bitcoin and not btc
+func (pc PricingController) getSellPriceKraken(cryptoCurrency string, fiatCurrency string) (*CurrencyTickerResponse, error) {
 	// URL Request
-	url := fmt.Sprintf("https://api.kraken.com/0/public/Ticker?pair=ETH%s", fiatCurrency)
+	// url := fmt.Sprintf("https://api.kraken.com/0/public/Ticker?pair=ETH%s", fiatCurrency)
+	url := fmt.Sprintf("https://api.coinmarketcap.com/v1/ticker/%s/", cryptoCurrency)
 
 	// Send the request via a client
 	// Do sends an HTTP request and
@@ -31,37 +51,12 @@ func (pc PricingController) getSellPriceKraken(cryptoCurrency string, fiatCurren
 	// Defer the closing of the body
 	defer resp.Body.Close()
 
-	var data map[string]interface{}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err := json.Unmarshal(body, &data); err == nil {
-		result, _ := data["result"].(map[string]interface{})
-		crypto := result["XETHZUSD"].(map[string]interface{})
-		lastTrade := crypto["c"].([]interface{})
-		lastPrice := lastTrade[0].(string)
-		// fmt.Printf("%T\n", lastTrade)
-		fmt.Println(lastPrice)
-		return &lastPrice, nil
+	var record []*CurrencyTickerResponse
+
+	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
+		log.Println(err)
+		return nil, err
 	}
-	return nil, nil
-	// var record GetMarkets
 
-	// if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
-	// 	log.Println(err)
-	// 	return nil, err
-	// }
-
-	// for index := 0; index < len(record.Result); index++ {
-	// 	// fmt.Println("Records :", record.Result[index])
-	// 	// json, err := json.Marshal(record.Result[index])
-
-	// 	resultJSON, err := json.Marshal(record.Result[index])
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return nil, err
-	// 	}
-
-	// 	fmt.Println(string(resultJSON))
-	// }
-
-	// return record.Result[0], nil
+	return record[0], nil
 }

@@ -22,7 +22,7 @@ func main() {
 	pc := PricingController{
 		client: httpClient,
 	}
-	result, err := pc.getSellPriceKraken("ETH", settings.currency)
+	result, err := pc.getSellPriceKraken("bitcoin", settings.currency)
 	if err == nil {
 		log.Printf("result: %s", *result)
 	}
