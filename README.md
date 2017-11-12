@@ -29,5 +29,5 @@ CREATE TABLE `btc_prices` (
   `last_update` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `time` (`last_update`,`currency_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
