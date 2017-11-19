@@ -31,3 +31,9 @@ CREATE TABLE `btc_prices` (
   UNIQUE KEY `time` (`last_update`,`currency_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
+
+### Grafana
+Setup: http://docs.grafana.org/features/datasources/mysql/
+```shell
+docker run -d -p 3000:3000 grafana/grafana
+````
